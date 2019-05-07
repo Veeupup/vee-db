@@ -13,6 +13,9 @@
 * 全部代码只有一个 main.c 
 
 * 使用 B-Tree 索引
-* 
 
+* 还在学…… 一边写一边看
+
+
+sqlite 架构图：
 ![](https://www.sqlite.org/images/arch2.gif)
