@@ -26,6 +26,7 @@ typedef enum MetaCommandResult_t MetaCommandResult;
 enum PrepareResult_t { 
   PREPARE_SUCCESS, 
   PREPARE_STRING_TOO_LONG,
+  PREPARE_NEGATIVE,
   PREPARE_UNRECOGNIZED_STATEMENT,
   PREPARE_SYNTAX_ERROR
 };
@@ -177,6 +178,9 @@ PrepareResult prepare_insert(InputBuffer* input_buffer, Statement* statement) {
   }
 
   int id = atoi(id_string);
+  if(id < 0) {
+    return PREPARE_NEGATIVE;
+  }
   if (strlen(username) > COLUMN_USERNAME_SIZE) {
     return PREPARE_STRING_TOO_LONG;
   }
@@ -195,17 +199,7 @@ PrepareResult prepare_insert(InputBuffer* input_buffer, Statement* statement) {
 PrepareResult prepare_statement(InputBuffer* input_buffer,
                                 Statement* statement) {
   if (strncmp(input_buffer->buffer, "insert", 6) == 0) {
-    statement->type = STATEMENT_INSERT;
-    // 获取参数个数
-    int args_assigned = sscanf(
-        input_buffer->buffer, "insert %d %s %s", &(statement->row_to_insert.id),
-        statement->row_to_insert.username, statement->row_to_insert.email
-        );
-    if (args_assigned < 3) {
-      //参数个数不够
-      return PREPARE_SYNTAX_ERROR;
-    }
-    return PREPARE_SUCCESS;
+    return prepare_insert(input_buffer, statement);
   }
   if (strcmp(input_buffer->buffer, "select") == 0) {
     statement->type = STATEMENT_SELECT;
@@ -270,6 +264,9 @@ int main(int argc, char* argv[]) {
     switch (prepare_statement(input_buffer, &statement)) {
       case (PREPARE_SUCCESS):
         break;
+      case (PREPARE_NEGATIVE):
+        printf("ID must be positive. \n");
+        continue;
       case (PREPARE_SYNTAX_ERROR):
         printf("Syntax error. Could not parse statement.\n");
       	continue;
